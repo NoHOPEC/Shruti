@@ -1,3 +1,4 @@
+# ShrutixMusic/core/call.py
 import asyncio
 import os
 from datetime import datetime, timedelta
@@ -35,6 +36,7 @@ from ShrutixMusic.utils.exceptions import AssistantErr
 from ShrutixMusic.utils.formatters import check_duration, seconds_to_min, speed_converter
 from ShrutixMusic.utils.inline.play import stream_markup
 from ShrutixMusic.utils.stream.autoclear import auto_clean
+from ShrutixMusic.utils.stream.autoplay import try_autoplay
 from ShrutixMusic.utils.thumbnails import get_thumb
 from strings import get_string
 
@@ -341,6 +343,8 @@ class Call(PyTgCalls):
                 await set_loop(chat_id, loop)
             await auto_clean(popped)
             if not check:
+                if await try_autoplay(client, chat_id, popped):
+                    return
                 await _clear_(chat_id)
                 return await client.leave_group_call(chat_id)
         except:
@@ -392,7 +396,7 @@ class Call(PyTgCalls):
                         text=_["call_6"],
                     )
                 img = await get_thumb(videoid)
-                button = stream_markup(_, chat_id)
+                button = await stream_markup(_, chat_id)
                 run = await nand.send_photo(
                     chat_id=original_chat_id,
                     photo=img,
@@ -438,7 +442,7 @@ class Call(PyTgCalls):
                         text=_["call_6"],
                     )
                 img = await get_thumb(videoid)
-                button = stream_markup(_, chat_id)
+                button = await stream_markup(_, chat_id)
                 await mystic.delete()
                 run = await nand.send_photo(
                     chat_id=original_chat_id,
@@ -470,7 +474,7 @@ class Call(PyTgCalls):
                         original_chat_id,
                         text=_["call_6"],
                     )
-                button = stream_markup(_, chat_id)
+                button = await stream_markup(_, chat_id)
                 run = await nand.send_photo(
                     chat_id=original_chat_id,
                     photo=config.STREAM_IMG_URL,
@@ -499,7 +503,7 @@ class Call(PyTgCalls):
                         text=_["call_6"],
                     )
                 if videoid == "telegram":
-                    button = stream_markup(_, chat_id)
+                    button = await stream_markup(_, chat_id)
                     run = await nand.send_photo(
                         chat_id=original_chat_id,
                         photo=config.TELEGRAM_AUDIO_URL
@@ -513,7 +517,7 @@ class Call(PyTgCalls):
                     db[chat_id][0]["mystic"] = run
                     db[chat_id][0]["markup"] = "tg"
                 elif videoid == "soundcloud":
-                    button = stream_markup(_, chat_id)
+                    button = await stream_markup(_, chat_id)
                     run = await nand.send_photo(
                         chat_id=original_chat_id,
                         photo=config.SOUNCLOUD_IMG_URL,
@@ -526,7 +530,7 @@ class Call(PyTgCalls):
                     db[chat_id][0]["markup"] = "tg"
                 else:
                     img = await get_thumb(videoid)
-                    button = stream_markup(_, chat_id)
+                    button = await stream_markup(_, chat_id)
                     run = await nand.send_photo(
                         chat_id=original_chat_id,
                         photo=img,
