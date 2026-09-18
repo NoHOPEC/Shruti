@@ -20,7 +20,11 @@ from ShrutixMusic.utils.database import (
 from ShrutixMusic.utils.decorators.language import languageCB
 from ShrutixMusic.utils.formatters import seconds_to_min
 from ShrutixMusic.utils.inline import close_markup
-from ShrutixMusic.utils.rich_stream import send_now_playing_rich, update_now_playing_progress
+from ShrutixMusic.utils.rich_stream import (
+    send_now_playing_rich,
+    set_now_playing_state,
+    update_now_playing_progress,
+)
 from ShrutixMusic.utils.stream.autoclear import auto_clean
 from ShrutixMusic.utils.thumbnails import get_thumb
 from config import (
@@ -137,6 +141,7 @@ async def del_back_playlist(client, CallbackQuery, _):
         await CallbackQuery.answer()
         await music_off(chat_id)
         await Shruti.pause_stream(chat_id)
+        await set_now_playing_state(chat_id, playing=False)
         await CallbackQuery.message.reply_text(
             _["admin_2"].format(mention), reply_markup=close_markup(_)
         )
@@ -146,6 +151,7 @@ async def del_back_playlist(client, CallbackQuery, _):
         await CallbackQuery.answer()
         await music_on(chat_id)
         await Shruti.resume_stream(chat_id)
+        await set_now_playing_state(chat_id, playing=True)
         await CallbackQuery.message.reply_text(
             _["admin_4"].format(mention), reply_markup=close_markup(_)
         )
