@@ -1,4 +1,3 @@
-# ShrutixMusic/core/call.py
 import asyncio
 import os
 from datetime import datetime, timedelta
@@ -37,6 +36,7 @@ from ShrutixMusic.utils.formatters import check_duration, seconds_to_min, speed_
 from ShrutixMusic.utils.inline.play import stream_markup
 from ShrutixMusic.utils.stream.autoclear import auto_clean
 from ShrutixMusic.utils.stream.autoplay import try_autoplay
+from ShrutixMusic.utils.stream.history import record_played
 from ShrutixMusic.utils.thumbnails import get_thumb
 from strings import get_string
 
@@ -343,7 +343,7 @@ class Call(PyTgCalls):
                 await set_loop(chat_id, loop)
             await auto_clean(popped)
             if not check:
-                if await try_autoplay(client, chat_id, popped):
+                if await try_autoplay(chat_id, popped):
                     return
                 await _clear_(chat_id)
                 return await client.leave_group_call(chat_id)
@@ -362,6 +362,8 @@ class Call(PyTgCalls):
             original_chat_id = check[0]["chat_id"]
             streamtype = check[0]["streamtype"]
             videoid = check[0]["vidid"]
+            if videoid and videoid not in ("telegram", "soundcloud"):
+                record_played(chat_id, videoid)
             db[chat_id][0]["played"] = 0
             exis = (check[0]).get("old_dur")
             if exis:
