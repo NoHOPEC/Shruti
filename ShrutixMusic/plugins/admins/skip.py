@@ -1,4 +1,3 @@
-# ShrutixMusic/plugins/admins/skip.py
 from pyrogram import filters
 from pyrogram.types import InlineKeyboardMarkup, Message
 
@@ -10,6 +9,8 @@ from ShrutixMusic.utils.database import get_loop
 from ShrutixMusic.utils.decorators import AdminRightsCheck
 from ShrutixMusic.utils.inline import close_markup, stream_markup
 from ShrutixMusic.utils.stream.autoclear import auto_clean
+from ShrutixMusic.utils.stream.autoplay import try_autoplay
+from ShrutixMusic.utils.stream.history import record_played
 from ShrutixMusic.utils.thumbnails import get_thumb
 from config import BANNED_USERS
 
@@ -41,6 +42,8 @@ async def skip(cli, message: Message, _, chat_id):
                             if popped:
                                 await auto_clean(popped)
                             if not check:
+                                if await try_autoplay(chat_id, popped):
+                                    return
                                 try:
                                     await message.reply_text(
                                         text=_["admin_6"].format(
@@ -69,6 +72,8 @@ async def skip(cli, message: Message, _, chat_id):
             if popped:
                 await auto_clean(popped)
             if not check:
+                if await try_autoplay(chat_id, popped):
+                    return
                 await message.reply_text(
                     text=_["admin_6"].format(
                         message.from_user.mention, message.chat.title
@@ -95,6 +100,8 @@ async def skip(cli, message: Message, _, chat_id):
     user = check[0]["by"]
     streamtype = check[0]["streamtype"]
     videoid = check[0]["vidid"]
+    if videoid and videoid not in ("telegram", "soundcloud"):
+        record_played(chat_id, videoid)
     status = True if str(streamtype) == "video" else None
     db[chat_id][0]["played"] = 0
     exis = (check[0]).get("old_dur")
