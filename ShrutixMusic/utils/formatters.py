@@ -1,4 +1,6 @@
+# ShrutixMusic/utils/formatters.py
 import json
+import re
 import subprocess
 
 
@@ -114,6 +116,18 @@ def speed_converter(seconds, speed):
             convert = "00:{:02d}".format(s)
             return convert, collect
     return "-"
+
+
+AUTOPLAY_LINE_PATTERN = re.compile(r"\n<b>‣ Autoplay :</b> (?:ON ✅|OFF ❌)\s*$")
+
+
+async def with_autoplay_status(text: str, chat_id: int) -> str:
+    from ShrutixMusic.utils.database import is_autoplay
+
+    mode = await is_autoplay(chat_id)
+    status = "ON ✅" if mode else "OFF ❌"
+    base = AUTOPLAY_LINE_PATTERN.sub("", text)
+    return f"{base}\n<b>‣ Autoplay :</b> {status}"
 
 
 def check_duration(file_path):
