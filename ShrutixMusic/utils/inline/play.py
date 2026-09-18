@@ -29,26 +29,6 @@ def track_markup(_, videoid, user_id, channel, fplay):
     return buttons
 
 
-def _control_row(chat_id):
-    return [
-        InlineKeyboardButton(
-            text="▷", callback_data=f"ADMIN Resume|{chat_id}", style="success"
-        ),
-        InlineKeyboardButton(
-            text="II", callback_data=f"ADMIN Pause|{chat_id}", style="primary"
-        ),
-        InlineKeyboardButton(
-            text="↻", callback_data=f"ADMIN Replay|{chat_id}", style="primary"
-        ),
-        InlineKeyboardButton(
-            text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}", style="primary"
-        ),
-        InlineKeyboardButton(
-            text="▢", callback_data=f"ADMIN Stop|{chat_id}", style="danger"
-        ),
-    ]
-
-
 def stream_markup_timer(_, chat_id, played, dur):
     played_sec = time_to_seconds(played)
     duration_sec = time_to_seconds(dur)
@@ -75,40 +55,41 @@ def stream_markup_timer(_, chat_id, played, dur):
     else:
         bar = "—————————◉"
     buttons = [
-        _control_row(chat_id),
+        [
+            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}"),
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}"),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}"),
+            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"),
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
+        ],
         [
             InlineKeyboardButton(
                 text=f"{played} {bar} {dur}",
                 callback_data="GetTimer",
             )
         ],
-        [
-            InlineKeyboardButton(
-                text=_["CLOSE_BUTTON"], callback_data="close", style="danger"
-            )
-        ],
+        [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")],
     ]
     return buttons
 
 
 def autoplay_markup(chat_id, mode: bool):
     text = "🔁 Autoplay: ON" if mode else "🔁 Autoplay: OFF"
-    style = "success" if mode else "danger"
-    return [
-        InlineKeyboardButton(text=text, callback_data=f"autoplay {chat_id}", style=style)
-    ]
+    return [InlineKeyboardButton(text=text, callback_data=f"autoplay {chat_id}")]
 
 
 async def stream_markup(_, chat_id):
     mode = await is_autoplay(chat_id)
     buttons = [
-        _control_row(chat_id),
-        autoplay_markup(chat_id, mode),
         [
-            InlineKeyboardButton(
-                text=_["CLOSE_BUTTON"], callback_data="close", style="danger"
-            )
+            InlineKeyboardButton(text="▷", callback_data=f"ADMIN Resume|{chat_id}"),
+            InlineKeyboardButton(text="II", callback_data=f"ADMIN Pause|{chat_id}"),
+            InlineKeyboardButton(text="↻", callback_data=f"ADMIN Replay|{chat_id}"),
+            InlineKeyboardButton(text="‣‣I", callback_data=f"ADMIN Skip|{chat_id}"),
+            InlineKeyboardButton(text="▢", callback_data=f"ADMIN Stop|{chat_id}"),
         ],
+        autoplay_markup(chat_id, mode),
+        [InlineKeyboardButton(text=_["CLOSE_BUTTON"], callback_data="close")],
     ]
     return buttons
 
