@@ -88,24 +88,43 @@ async def download_video(link: str) -> str:
         return None
 
 
+AUTOPLAY_REQUEST_TIMEOUT = 60
+AUTOPLAY_MAX_RETRIES = 6
+AUTOPLAY_RETRY_DELAY = 3
+AUTOPLAY_RETRYABLE_STATUS = (408, 425, 429, 500, 502, 503, 504)
+
+
 async def get_autoplay(video_id: str) -> list:
     video_id = video_id.split("v=")[-1].split("&")[0] if "v=" in video_id else video_id
     if not video_id or len(video_id) < 3:
         return []
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{API_URL}/autoplay",
-                params={"video_id": video_id, "api_key": API_KEY},
-                timeout=aiohttp.ClientTimeout(total=20)
-            ) as resp:
-                if resp.status != 200:
+    attempt = 0
+    while attempt < AUTOPLAY_MAX_RETRIES:
+        attempt += 1
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    f"{API_URL}/autoplay",
+                    params={"video_id": video_id, "api_key": API_KEY},
+                    timeout=aiohttp.ClientTimeout(total=AUTOPLAY_REQUEST_TIMEOUT),
+                ) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        return data.get("tracks", [])
+                    if resp.status in AUTOPLAY_RETRYABLE_STATUS and attempt < AUTOPLAY_MAX_RETRIES:
+                        await asyncio.sleep(AUTOPLAY_RETRY_DELAY)
+                        continue
                     return []
-                data = await resp.json()
-                return data.get("tracks", [])
-    except Exception:
-        return []
+        except (asyncio.TimeoutError, aiohttp.ClientError):
+            if attempt < AUTOPLAY_MAX_RETRIES:
+                await asyncio.sleep(AUTOPLAY_RETRY_DELAY)
+                continue
+            return []
+        except Exception:
+            return []
+
+    return []
 
 
 class YouTubeAPI:
