@@ -118,16 +118,8 @@ def speed_converter(seconds, speed):
     return "-"
 
 
-AUTOPLAY_LINE_PATTERN = re.compile(r"\n<b>‣ Autoplay :</b> (?:ON ✅|OFF ❌)\s*$")
-
-
 async def with_autoplay_status(text: str, chat_id: int) -> str:
-    from ShrutixMusic.utils.database import is_autoplay
-
-    mode = await is_autoplay(chat_id)
-    status = "ON ✅" if mode else "OFF ❌"
-    base = AUTOPLAY_LINE_PATTERN.sub("", text)
-    return f"{base}\n<b>‣ Autoplay :</b> {status}"
+    return text
 
 
 def check_duration(file_path):
