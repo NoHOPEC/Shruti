@@ -1,10 +1,11 @@
+# ShrutixMusic/utils/stream/autoplay.py
 from pyrogram.types import InlineKeyboardMarkup
 
 from ShrutixMusic import YouTube, nand
 from ShrutixMusic.misc import db
 from ShrutixMusic.platforms.Youtube import get_autoplay
 from ShrutixMusic.utils.database import get_lang, is_autoplay
-from ShrutixMusic.utils.formatters import seconds_to_min
+from ShrutixMusic.utils.formatters import seconds_to_min, with_autoplay_status
 from ShrutixMusic.utils.inline.play import stream_markup
 from ShrutixMusic.utils.stream.history import record_played, was_recently_played
 from ShrutixMusic.utils.stream.queue import put_queue
@@ -105,11 +106,14 @@ async def try_autoplay(chat_id, popped) -> bool:
     run = await nand.send_photo(
         chat_id=original_chat_id,
         photo=img,
-        caption=_["stream_1"].format(
-            f"https://t.me/{nand.username}?start=info_{next_id}",
-            title[:23],
-            duration_min,
-            "Autoplay",
+        caption=await with_autoplay_status(
+            _["stream_1"].format(
+                f"https://t.me/{nand.username}?start=info_{next_id}",
+                title[:23],
+                duration_min,
+                "Autoplay",
+            ),
+            chat_id,
         ),
         reply_markup=InlineKeyboardMarkup(button),
     )
