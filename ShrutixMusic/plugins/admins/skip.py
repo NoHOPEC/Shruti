@@ -7,7 +7,8 @@ from ShrutixMusic.core.call import Shruti
 from ShrutixMusic.misc import db
 from ShrutixMusic.utils.database import get_loop
 from ShrutixMusic.utils.decorators import AdminRightsCheck
-from ShrutixMusic.utils.inline import close_markup, stream_markup
+from ShrutixMusic.utils.inline import close_markup
+from ShrutixMusic.utils.rich_stream import send_now_playing_rich
 from ShrutixMusic.utils.stream.autoclear import auto_clean
 from ShrutixMusic.utils.stream.autoplay import try_autoplay
 from ShrutixMusic.utils.stream.history import record_played
@@ -122,17 +123,18 @@ async def skip(cli, message: Message, _, chat_id):
             await Shruti.skip_stream(chat_id, link, video=status, image=image)
         except:
             return await message.reply_text(_["call_6"])
-        button = await stream_markup(_, chat_id)
         img = await get_thumb(videoid)
-        run = await message.reply_photo(
-            photo=img,
-            caption=_["stream_1"].format(
+        run = await send_now_playing_rich(
+            nand,
+            chat_id,
+            message.chat.id,
+            img,
+            _["stream_1"].format(
                 f"https://t.me/{nand.username}?start=info_{videoid}",
                 title[:23],
                 check[0]["dur"],
                 user,
             ),
-            reply_markup=InlineKeyboardMarkup(button),
         )
         db[chat_id][0]["mystic"] = run
         db[chat_id][0]["markup"] = "tg"
@@ -155,17 +157,18 @@ async def skip(cli, message: Message, _, chat_id):
             await Shruti.skip_stream(chat_id, file_path, video=status, image=image)
         except:
             return await mystic.edit_text(_["call_6"])
-        button = await stream_markup(_, chat_id)
         img = await get_thumb(videoid)
-        run = await message.reply_photo(
-            photo=img,
-            caption=_["stream_1"].format(
+        run = await send_now_playing_rich(
+            nand,
+            chat_id,
+            message.chat.id,
+            img,
+            _["stream_1"].format(
                 f"https://t.me/{nand.username}?start=info_{videoid}",
                 title[:23],
                 check[0]["dur"],
                 user,
             ),
-            reply_markup=InlineKeyboardMarkup(button),
         )
         db[chat_id][0]["mystic"] = run
         db[chat_id][0]["markup"] = "stream"
@@ -175,11 +178,12 @@ async def skip(cli, message: Message, _, chat_id):
             await Shruti.skip_stream(chat_id, videoid, video=status)
         except:
             return await message.reply_text(_["call_6"])
-        button = await stream_markup(_, chat_id)
-        run = await message.reply_photo(
-            photo=config.STREAM_IMG_URL,
-            caption=_["stream_2"].format(user),
-            reply_markup=InlineKeyboardMarkup(button),
+        run = await send_now_playing_rich(
+            nand,
+            chat_id,
+            message.chat.id,
+            config.STREAM_IMG_URL,
+            _["stream_2"].format(user),
         )
         db[chat_id][0]["mystic"] = run
         db[chat_id][0]["markup"] = "tg"
@@ -198,43 +202,46 @@ async def skip(cli, message: Message, _, chat_id):
         except:
             return await message.reply_text(_["call_6"])
         if videoid == "telegram":
-            button = await stream_markup(_, chat_id)
-            run = await message.reply_photo(
-                photo=config.TELEGRAM_AUDIO_URL
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                message.chat.id,
+                config.TELEGRAM_AUDIO_URL
                 if str(streamtype) == "audio"
                 else config.TELEGRAM_VIDEO_URL,
-                caption=_["stream_1"].format(
+                _["stream_1"].format(
                     config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
                 ),
-                reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
         elif videoid == "soundcloud":
-            button = await stream_markup(_, chat_id)
-            run = await message.reply_photo(
-                photo=config.SOUNCLOUD_IMG_URL
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                message.chat.id,
+                config.SOUNCLOUD_IMG_URL
                 if str(streamtype) == "audio"
                 else config.TELEGRAM_VIDEO_URL,
-                caption=_["stream_1"].format(
+                _["stream_1"].format(
                     config.SUPPORT_CHAT, title[:23], check[0]["dur"], user
                 ),
-                reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
         else:
-            button = await stream_markup(_, chat_id)
             img = await get_thumb(videoid)
-            run = await message.reply_photo(
-                photo=img,
-                caption=_["stream_1"].format(
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                message.chat.id,
+                img,
+                _["stream_1"].format(
                     f"https://t.me/{nand.username}?start=info_{videoid}",
                     title[:23],
                     check[0]["dur"],
                     user,
                 ),
-                reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
