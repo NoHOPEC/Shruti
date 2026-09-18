@@ -1,5 +1,6 @@
 # ShrutixMusic/utils/rich_stream.py
 import math
+import random
 import re
 
 from pyrogram import enums, types
@@ -77,11 +78,20 @@ def _progress_line(played, dur):
     return f"{played}  {bar}  {dur}"
 
 
+_PROGRESS_STYLES = [
+    enums.ButtonStyle.DEFAULT,
+    enums.ButtonStyle.PRIMARY,
+    enums.ButtonStyle.SUCCESS,
+    enums.ButtonStyle.DANGER,
+]
+
+
 def _progress_row(played, dur):
     return types.InputRichBlockButtons(
         buttons=[
             types.RichMessageButton(
                 text=_progress_line(played, dur),
+                style=random.choice(_PROGRESS_STYLES),
                 callback_data="GetTimer",
             )
         ]
@@ -93,7 +103,7 @@ def _queue_len(chat_id):
     return max(len(tracks) - 1, 0) if tracks else 0
 
 
-def _control_row(chat_id, playing):
+def _control_rows(chat_id, playing):
     toggle = (
         types.RichMessageButton(
             text="II Pause",
@@ -107,26 +117,32 @@ def _control_row(chat_id, playing):
             callback_data=f"ADMIN Resume|{chat_id}",
         )
     )
-    return types.InputRichBlockButtons(
-        buttons=[
-            types.RichMessageButton(
-                text="↺ Replay",
-                style=enums.ButtonStyle.PRIMARY,
-                callback_data=f"ADMIN Replay|{chat_id}",
-            ),
-            toggle,
-            types.RichMessageButton(
-                text="» Skip",
-                style=enums.ButtonStyle.PRIMARY,
-                callback_data=f"ADMIN Skip|{chat_id}",
-            ),
-            types.RichMessageButton(
-                text=f"☰ Queue · {_queue_len(chat_id)}",
-                style=enums.ButtonStyle.SUCCESS,
-                callback_data=f"nowplaying_queue {chat_id}",
-            ),
-        ]
-    )
+    return [
+        types.InputRichBlockButtons(
+            buttons=[
+                types.RichMessageButton(
+                    text="↺ Replay",
+                    style=enums.ButtonStyle.PRIMARY,
+                    callback_data=f"ADMIN Replay|{chat_id}",
+                ),
+                toggle,
+                types.RichMessageButton(
+                    text="» Skip",
+                    style=enums.ButtonStyle.PRIMARY,
+                    callback_data=f"ADMIN Skip|{chat_id}",
+                ),
+            ]
+        ),
+        types.InputRichBlockButtons(
+            buttons=[
+                types.RichMessageButton(
+                    text=f"☰ Queue · {_queue_len(chat_id)}",
+                    style=enums.ButtonStyle.SUCCESS,
+                    callback_data=f"nowplaying_queue {chat_id}",
+                ),
+            ]
+        ),
+    ]
 
 
 def build_now_playing_blocks(photo, caption_html, chat_id, played=None, dur=None, playing=True):
@@ -134,7 +150,7 @@ def build_now_playing_blocks(photo, caption_html, chat_id, played=None, dur=None
     blocks += _html_caption_to_paragraphs(caption_html)
     if played and dur:
         blocks.append(_progress_row(played, dur))
-    blocks.append(_control_row(chat_id, playing))
+    blocks += _control_rows(chat_id, playing)
     return blocks
 
 
