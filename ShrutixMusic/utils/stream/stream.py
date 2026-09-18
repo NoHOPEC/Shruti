@@ -1,3 +1,4 @@
+# ShrutixMusic/utils/stream/stream.py
 import os
 from random import randint
 from typing import Union
@@ -10,7 +11,7 @@ from ShrutixMusic.core.call import Shruti
 from ShrutixMusic.misc import db
 from ShrutixMusic.utils.database import add_active_video_chat, is_active_chat
 from ShrutixMusic.utils.exceptions import AssistantErr
-from ShrutixMusic.utils.inline import aq_markup, close_markup, stream_markup
+from ShrutixMusic.utils.inline import aq_markup, close_markup
 from ShrutixMusic.utils.rich_stream import send_now_playing_rich
 from ShrutixMusic.utils.pastebin import ShrutiBin
 from ShrutixMusic.utils.stream.queue import put_queue, put_queue_index
@@ -100,9 +101,9 @@ async def stream(
                     forceplay=forceplay,
                 )
                 img = await get_thumb(vidid)
-                button = await stream_markup(_, chat_id)
                 run = await send_now_playing_rich(
                     nand,
+                    chat_id,
                     original_chat_id,
                     img,
                     _["stream_1"].format(
@@ -111,8 +112,7 @@ async def stream(
                         duration_min,
                         user_name,
                     ),
-                    button,
-                )
+                    )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "stream"
         if count == 0:
@@ -187,9 +187,9 @@ async def stream(
                 forceplay=forceplay,
             )
             img = await get_thumb(vidid)
-            button = await stream_markup(_, chat_id)
             run = await send_now_playing_rich(
                 nand,
+                chat_id,
                 original_chat_id,
                 img,
                     _["stream_1"].format(
@@ -198,8 +198,7 @@ async def stream(
                         duration_min,
                         user_name,
                     ),
-                button,
-            )
+                )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
     elif streamtype == "soundcloud":
@@ -241,16 +240,15 @@ async def stream(
                 "audio",
                 forceplay=forceplay,
             )
-            button = await stream_markup(_, chat_id)
             run = await send_now_playing_rich(
                 nand,
+                chat_id,
                 original_chat_id,
                 config.SOUNCLOUD_IMG_URL,
                     _["stream_1"].format(
                         config.SUPPORT_CHAT, title[:23], duration_min, user_name
                     ),
-                button,
-            )
+                )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
     elif streamtype == "telegram":
@@ -296,14 +294,13 @@ async def stream(
             )
             if video:
                 await add_active_video_chat(chat_id)
-            button = await stream_markup(_, chat_id)
             run = await send_now_playing_rich(
                 nand,
+                chat_id,
                 original_chat_id,
                 config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
                     _["stream_1"].format(link, title[:23], duration_min, user_name),
-                button,
-            )
+                )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
     elif streamtype == "live":
@@ -358,9 +355,9 @@ async def stream(
                 forceplay=forceplay,
             )
             img = await get_thumb(vidid)
-            button = await stream_markup(_, chat_id)
             run = await send_now_playing_rich(
                 nand,
+                chat_id,
                 original_chat_id,
                 img,
                     _["stream_1"].format(
@@ -369,8 +366,7 @@ async def stream(
                         duration_min,
                         user_name,
                     ),
-                button,
-            )
+                )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
     elif streamtype == "index":
@@ -414,14 +410,13 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            button = await stream_markup(_, chat_id)
             run = await send_now_playing_rich(
                 nand,
+                chat_id,
                 original_chat_id,
                 config.STREAM_IMG_URL,
                 _["stream_2"].format(user_name),
-                button,
-            )
+                )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
             await mystic.delete()
