@@ -1,3 +1,7 @@
+from ShrutixMusic.utils.pytgcalls_patch import apply as _apply_pytgcalls_patch
+
+_apply_pytgcalls_patch()
+
 from ShrutixMusic.core.bot import Shruti
 from ShrutixMusic.core.dir import dirr
 from ShrutixMusic.core.git import git
