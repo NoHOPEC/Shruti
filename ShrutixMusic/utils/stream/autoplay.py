@@ -1,7 +1,4 @@
-# ShrutixMusic/utils/stream/autoplay.py
 from pyrogram.types import InlineKeyboardMarkup
-from pytgcalls.types.input_stream import AudioPiped, AudioVideoPiped
-from pytgcalls.types.input_stream.quality import HighQualityAudio, MediumQualityVideo
 
 from ShrutixMusic import YouTube, nand
 from ShrutixMusic.misc import db
@@ -9,15 +6,19 @@ from ShrutixMusic.platforms.Youtube import get_autoplay
 from ShrutixMusic.utils.database import get_lang, is_autoplay
 from ShrutixMusic.utils.formatters import seconds_to_min
 from ShrutixMusic.utils.inline.play import stream_markup
+from ShrutixMusic.utils.stream.history import record_played, was_recently_played
 from ShrutixMusic.utils.stream.queue import put_queue
 from ShrutixMusic.utils.thumbnails import get_thumb
 from strings import get_string
 
+_pending = {}
 
-async def _first_downloadable(tracks, video: bool):
-    for track in tracks:
+
+async def _first_downloadable(chat_id, tracks, video: bool):
+    while tracks:
+        track = tracks.pop(0)
         next_id = track.get("video_id")
-        if not next_id:
+        if not next_id or was_recently_played(chat_id, next_id):
             continue
 
         title = (track.get("title") or "Autoplay Track").title()
@@ -32,48 +33,52 @@ async def _first_downloadable(tracks, video: bool):
     return None
 
 
-async def try_autoplay(client, chat_id, popped) -> bool:
+async def try_autoplay(chat_id, popped) -> bool:
     if not popped:
         return False
 
     if not await is_autoplay(chat_id):
         return False
 
-    video_id = popped.get("vidid")
-    if not video_id or video_id in ("telegram", "soundcloud"):
+    source_id = popped.get("vidid")
+    if not source_id or source_id in ("telegram", "soundcloud"):
         return False
 
     original_chat_id = popped.get("chat_id")
     video = str(popped.get("streamtype")) == "video"
 
-    try:
-        tracks = await get_autoplay(video_id)
-    except Exception:
-        tracks = []
+    pending = _pending.get(chat_id) or []
+    picked = await _first_downloadable(chat_id, pending, video)
 
-    if not tracks:
-        return False
+    if not picked:
+        try:
+            fresh = await get_autoplay(source_id)
+        except Exception:
+            fresh = []
 
-    picked = await _first_downloadable(tracks, video)
+        pending = [
+            track
+            for track in fresh
+            if track.get("video_id")
+            and not was_recently_played(chat_id, track["video_id"])
+        ]
+        picked = await _first_downloadable(chat_id, pending, video)
+
+    _pending[chat_id] = pending
+
     if not picked:
         return False
 
     next_id, title, duration_min, file_path, direct = picked
 
-    stream = (
-        AudioVideoPiped(
-            file_path,
-            audio_parameters=HighQualityAudio(),
-            video_parameters=MediumQualityVideo(),
-        )
-        if video
-        else AudioPiped(file_path, audio_parameters=HighQualityAudio())
-    )
+    from ShrutixMusic.core.call import Shruti
 
     try:
-        await client.change_stream(chat_id, stream)
+        await Shruti.skip_stream(chat_id, file_path, video=video)
     except Exception:
         return False
+
+    record_played(chat_id, next_id)
 
     await put_queue(
         chat_id,
