@@ -5,7 +5,7 @@ import re
 from pyrogram import enums, types
 
 from ShrutixMusic.misc import db
-from ShrutixMusic.utils.formatters import time_to_seconds
+from ShrutixMusic.utils.formatters import seconds_to_min, time_to_seconds
 
 _TAG_RE = re.compile(r"<(/?)(b|a)(?:\s+href=([^>]+))?>", re.IGNORECASE)
 
@@ -77,6 +77,17 @@ def _progress_line(played, dur):
     return f"{played}  {bar}  {dur}"
 
 
+def _progress_row(played, dur):
+    return types.InputRichBlockButtons(
+        buttons=[
+            types.RichMessageButton(
+                text=_progress_line(played, dur),
+                callback_data="GetTimer",
+            )
+        ]
+    )
+
+
 def _queue_len(chat_id):
     tracks = db.get(chat_id)
     return max(len(tracks) - 1, 0) if tracks else 0
@@ -122,7 +133,7 @@ def build_now_playing_blocks(photo, caption_html, chat_id, played=None, dur=None
     blocks = [types.InputRichBlockPhoto(photo=types.InputMediaPhoto(photo))]
     blocks += _html_caption_to_paragraphs(caption_html)
     if played and dur:
-        blocks.append(types.InputRichBlockParagraph(text=_progress_line(played, dur)))
+        blocks.append(_progress_row(played, dur))
     blocks.append(_control_row(chat_id, playing))
     return blocks
 
@@ -149,3 +160,21 @@ async def update_now_playing_progress(mystic, chat_id, played, dur, playing=True
         return None
     blocks = build_now_playing_blocks(photo, caption_html, chat_id, played, dur, playing)
     return await mystic.edit_text(rich_message=types.InputRichMessage(blocks=blocks))
+
+
+async def set_now_playing_state(chat_id, playing):
+    info = db.get(chat_id)
+    if not info:
+        return None
+    mystic = info[0].get("mystic")
+    photo = info[0].get("np_photo")
+    caption_html = info[0].get("np_caption")
+    if not mystic or not photo or not caption_html:
+        return None
+    played = seconds_to_min(info[0].get("played", 0)) or None
+    dur = info[0].get("dur")
+    blocks = build_now_playing_blocks(photo, caption_html, chat_id, played, dur, playing)
+    try:
+        return await mystic.edit_text(rich_message=types.InputRichMessage(blocks=blocks))
+    except Exception:
+        return None
