@@ -1,12 +1,10 @@
 # ShrutixMusic/utils/stream/autoplay.py
-from pyrogram.types import InlineKeyboardMarkup
-
 from ShrutixMusic import YouTube, nand
 from ShrutixMusic.misc import db
 from ShrutixMusic.platforms.Youtube import get_autoplay
 from ShrutixMusic.utils.database import get_lang, is_autoplay
-from ShrutixMusic.utils.formatters import seconds_to_min, with_autoplay_status
-from ShrutixMusic.utils.inline.play import stream_markup
+from ShrutixMusic.utils.formatters import seconds_to_min
+from ShrutixMusic.utils.rich_stream import send_now_playing_rich
 from ShrutixMusic.utils.stream.history import record_played, was_recently_played
 from ShrutixMusic.utils.stream.queue import put_queue
 from ShrutixMusic.utils.thumbnails import get_thumb
@@ -101,21 +99,18 @@ async def try_autoplay(chat_id, popped) -> bool:
     language = await get_lang(original_chat_id)
     _ = get_string(language)
     img = await get_thumb(next_id)
-    button = await stream_markup(_, chat_id)
 
-    run = await nand.send_photo(
-        chat_id=original_chat_id,
-        photo=img,
-        caption=await with_autoplay_status(
-            _["stream_1"].format(
-                f"https://t.me/{nand.username}?start=info_{next_id}",
-                title[:23],
-                duration_min,
-                "Autoplay",
-            ),
-            chat_id,
+    run = await send_now_playing_rich(
+        nand,
+        chat_id,
+        original_chat_id,
+        img,
+        _["stream_1"].format(
+            f"https://t.me/{nand.username}?start=info_{next_id}",
+            title[:23],
+            duration_min,
+            "Autoplay",
         ),
-        reply_markup=InlineKeyboardMarkup(button),
     )
     db[chat_id][0]["mystic"] = run
     db[chat_id][0]["markup"] = "stream"
