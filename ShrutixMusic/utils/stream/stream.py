@@ -1,4 +1,3 @@
-# ShrutixMusic/utils/stream/stream.py
 import os
 from random import randint
 from typing import Union
@@ -11,8 +10,8 @@ from ShrutixMusic.core.call import Shruti
 from ShrutixMusic.misc import db
 from ShrutixMusic.utils.database import add_active_video_chat, is_active_chat
 from ShrutixMusic.utils.exceptions import AssistantErr
-from ShrutixMusic.utils.formatters import with_autoplay_status
 from ShrutixMusic.utils.inline import aq_markup, close_markup, stream_markup
+from ShrutixMusic.utils.rich_stream import send_now_playing_rich
 from ShrutixMusic.utils.pastebin import ShrutiBin
 from ShrutixMusic.utils.stream.queue import put_queue, put_queue_index
 from ShrutixMusic.utils.thumbnails import get_thumb
@@ -102,19 +101,17 @@ async def stream(
                 )
                 img = await get_thumb(vidid)
                 button = await stream_markup(_, chat_id)
-                run = await nand.send_photo(
+                run = await send_now_playing_rich(
+                    nand,
                     original_chat_id,
-                    photo=img,
-                    caption=await with_autoplay_status(
-                        _["stream_1"].format(
-                            f"https://t.me/{nand.username}?start=info_{vidid}",
-                            title[:23],
-                            duration_min,
-                            user_name,
-                        ),
-                        chat_id,
+                    img,
+                    _["stream_1"].format(
+                        f"https://t.me/{nand.username}?start=info_{vidid}",
+                        title[:23],
+                        duration_min,
+                        user_name,
                     ),
-                    reply_markup=InlineKeyboardMarkup(button),
+                    button,
                 )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "stream"
@@ -191,19 +188,17 @@ async def stream(
             )
             img = await get_thumb(vidid)
             button = await stream_markup(_, chat_id)
-            run = await nand.send_photo(
+            run = await send_now_playing_rich(
+                nand,
                 original_chat_id,
-                photo=img,
-                caption=await with_autoplay_status(
+                img,
                     _["stream_1"].format(
                         f"https://t.me/{nand.username}?start=info_{vidid}",
                         title[:23],
                         duration_min,
                         user_name,
                     ),
-                    chat_id,
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
+                button,
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
@@ -247,16 +242,14 @@ async def stream(
                 forceplay=forceplay,
             )
             button = await stream_markup(_, chat_id)
-            run = await nand.send_photo(
+            run = await send_now_playing_rich(
+                nand,
                 original_chat_id,
-                photo=config.SOUNCLOUD_IMG_URL,
-                caption=await with_autoplay_status(
+                config.SOUNCLOUD_IMG_URL,
                     _["stream_1"].format(
                         config.SUPPORT_CHAT, title[:23], duration_min, user_name
                     ),
-                    chat_id,
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
+                button,
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
@@ -304,14 +297,12 @@ async def stream(
             if video:
                 await add_active_video_chat(chat_id)
             button = await stream_markup(_, chat_id)
-            run = await nand.send_photo(
+            run = await send_now_playing_rich(
+                nand,
                 original_chat_id,
-                photo=config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
-                caption=await with_autoplay_status(
+                config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
                     _["stream_1"].format(link, title[:23], duration_min, user_name),
-                    chat_id,
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
+                button,
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
@@ -368,19 +359,17 @@ async def stream(
             )
             img = await get_thumb(vidid)
             button = await stream_markup(_, chat_id)
-            run = await nand.send_photo(
+            run = await send_now_playing_rich(
+                nand,
                 original_chat_id,
-                photo=img,
-                caption=await with_autoplay_status(
+                img,
                     _["stream_1"].format(
                         f"https://t.me/{nand.username}?start=info_{vidid}",
                         title[:23],
                         duration_min,
                         user_name,
                     ),
-                    chat_id,
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
+                button,
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
@@ -426,13 +415,12 @@ async def stream(
                 forceplay=forceplay,
             )
             button = await stream_markup(_, chat_id)
-            run = await nand.send_photo(
+            run = await send_now_playing_rich(
+                nand,
                 original_chat_id,
-                photo=config.STREAM_IMG_URL,
-                caption=await with_autoplay_status(
-                    _["stream_2"].format(user_name), chat_id
-                ),
-                reply_markup=InlineKeyboardMarkup(button),
+                config.STREAM_IMG_URL,
+                _["stream_2"].format(user_name),
+                button,
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
