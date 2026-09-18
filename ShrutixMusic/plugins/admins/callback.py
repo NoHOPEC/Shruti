@@ -9,7 +9,6 @@ from ShrutixMusic.core.call import Shruti
 from ShrutixMusic.misc import SUDOERS, db
 from ShrutixMusic.utils.database import (
     get_active_chats,
-    get_lang,
     get_upvote_count,
     is_active_chat,
     is_music_playing,
@@ -20,7 +19,8 @@ from ShrutixMusic.utils.database import (
 )
 from ShrutixMusic.utils.decorators.language import languageCB
 from ShrutixMusic.utils.formatters import seconds_to_min
-from ShrutixMusic.utils.inline import close_markup, stream_markup, stream_markup_timer
+from ShrutixMusic.utils.inline import close_markup
+from ShrutixMusic.utils.rich_stream import send_now_playing_rich, update_now_playing_progress
 from ShrutixMusic.utils.stream.autoclear import auto_clean
 from ShrutixMusic.utils.thumbnails import get_thumb
 from config import (
@@ -34,7 +34,6 @@ from config import (
     confirmer,
     votemode,
 )
-from strings import get_string
 
 checker = {}
 upvoters = {}
@@ -227,17 +226,18 @@ async def del_back_playlist(client, CallbackQuery, _):
                 await Shruti.skip_stream(chat_id, link, video=status, image=image)
             except:
                 return await CallbackQuery.message.reply_text(_["call_6"])
-            button = await stream_markup(_, chat_id)
             img = await get_thumb(videoid)
-            run = await CallbackQuery.message.reply_photo(
-                photo=img,
-                caption=_["stream_1"].format(
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                CallbackQuery.message.chat.id,
+                img,
+                _["stream_1"].format(
                     f"https://t.me/{nand.username}?start=info_{videoid}",
                     title[:23],
                     duration,
                     user,
                 ),
-                reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
@@ -263,17 +263,18 @@ async def del_back_playlist(client, CallbackQuery, _):
                 await Shruti.skip_stream(chat_id, file_path, video=status, image=image)
             except:
                 return await mystic.edit_text(_["call_6"])
-            button = await stream_markup(_, chat_id)
             img = await get_thumb(videoid)
-            run = await CallbackQuery.message.reply_photo(
-                photo=img,
-                caption=_["stream_1"].format(
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                CallbackQuery.message.chat.id,
+                img,
+                _["stream_1"].format(
                     f"https://t.me/{nand.username}?start=info_{videoid}",
                     title[:23],
                     duration,
                     user,
                 ),
-                reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "stream"
@@ -284,11 +285,12 @@ async def del_back_playlist(client, CallbackQuery, _):
                 await Shruti.skip_stream(chat_id, videoid, video=status)
             except:
                 return await CallbackQuery.message.reply_text(_["call_6"])
-            button = await stream_markup(_, chat_id)
-            run = await CallbackQuery.message.reply_photo(
-                photo=STREAM_IMG_URL,
-                caption=_["stream_2"].format(user),
-                reply_markup=InlineKeyboardMarkup(button),
+            run = await send_now_playing_rich(
+                nand,
+                chat_id,
+                CallbackQuery.message.chat.id,
+                STREAM_IMG_URL,
+                _["stream_2"].format(user),
             )
             db[chat_id][0]["mystic"] = run
             db[chat_id][0]["markup"] = "tg"
@@ -308,43 +310,42 @@ async def del_back_playlist(client, CallbackQuery, _):
             except:
                 return await CallbackQuery.message.reply_text(_["call_6"])
             if videoid == "telegram":
-                button = await stream_markup(_, chat_id)
-                run = await CallbackQuery.message.reply_photo(
-                    photo=TELEGRAM_AUDIO_URL
+                run = await send_now_playing_rich(
+                    nand,
+                    chat_id,
+                    CallbackQuery.message.chat.id,
+                    TELEGRAM_AUDIO_URL
                     if str(streamtype) == "audio"
                     else TELEGRAM_VIDEO_URL,
-                    caption=_["stream_1"].format(
-                        SUPPORT_CHAT, title[:23], duration, user
-                    ),
-                    reply_markup=InlineKeyboardMarkup(button),
+                    _["stream_1"].format(SUPPORT_CHAT, title[:23], duration, user),
                 )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "tg"
             elif videoid == "soundcloud":
-                button = await stream_markup(_, chat_id)
-                run = await CallbackQuery.message.reply_photo(
-                    photo=SOUNCLOUD_IMG_URL
+                run = await send_now_playing_rich(
+                    nand,
+                    chat_id,
+                    CallbackQuery.message.chat.id,
+                    SOUNCLOUD_IMG_URL
                     if str(streamtype) == "audio"
                     else TELEGRAM_VIDEO_URL,
-                    caption=_["stream_1"].format(
-                        SUPPORT_CHAT, title[:23], duration, user
-                    ),
-                    reply_markup=InlineKeyboardMarkup(button),
+                    _["stream_1"].format(SUPPORT_CHAT, title[:23], duration, user),
                 )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "tg"
             else:
-                button = await stream_markup(_, chat_id)
                 img = await get_thumb(videoid)
-                run = await CallbackQuery.message.reply_photo(
-                    photo=img,
-                    caption=_["stream_1"].format(
+                run = await send_now_playing_rich(
+                    nand,
+                    chat_id,
+                    CallbackQuery.message.chat.id,
+                    img,
+                    _["stream_1"].format(
                         f"https://t.me/{nand.username}?start=info_{videoid}",
                         title[:23],
                         duration,
                         user,
                     ),
-                    reply_markup=InlineKeyboardMarkup(button),
                 )
                 db[chat_id][0]["mystic"] = run
                 db[chat_id][0]["markup"] = "stream"
@@ -375,24 +376,27 @@ async def markup_timer():
                 except:
                     pass
                 try:
-                    language = await get_lang(chat_id)
-                    _ = get_string(language)
-                except:
-                    _ = get_string("en")
-                try:
-                    buttons = stream_markup_timer(
-                        _,
+                    await update_now_playing_progress(
+                        mystic,
                         chat_id,
                         seconds_to_min(playing[0]["played"]),
                         playing[0]["dur"],
-                    )
-                    await mystic.edit_reply_markup(
-                        reply_markup=InlineKeyboardMarkup(buttons)
                     )
                 except:
                     continue
             except:
                 continue
+
+
+@nand.on_callback_query(filters.regex("nowplaying_queue") & ~BANNED_USERS)
+async def nowplaying_queue_alert(client, CallbackQuery):
+    chat_id = int(CallbackQuery.data.split(None, 1)[1])
+    tracks = db.get(chat_id) or []
+    upcoming = tracks[1:]
+    if not upcoming:
+        return await CallbackQuery.answer("Queue is empty.", show_alert=True)
+    lines = [f"{i}. {t['title'][:40]}" for i, t in enumerate(upcoming[:10], start=1)]
+    await CallbackQuery.answer("\n".join(lines), show_alert=True)
 
 
 asyncio.create_task(markup_timer())
