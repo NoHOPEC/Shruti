@@ -47,7 +47,12 @@ async def try_autoplay(chat_id, popped) -> bool:
     original_chat_id = popped.get("chat_id")
     video = str(popped.get("streamtype")) == "video"
 
-    pending = _pending.get(chat_id) or []
+    cached = _pending.get(chat_id)
+    if cached and cached.get("source_id") == source_id:
+        pending = cached.get("tracks") or []
+    else:
+        pending = []
+
     picked = await _first_downloadable(chat_id, pending, video)
 
     if not picked:
@@ -64,7 +69,7 @@ async def try_autoplay(chat_id, popped) -> bool:
         ]
         picked = await _first_downloadable(chat_id, pending, video)
 
-    _pending[chat_id] = pending
+    _pending[chat_id] = {"source_id": source_id, "tracks": pending}
 
     if not picked:
         return False
