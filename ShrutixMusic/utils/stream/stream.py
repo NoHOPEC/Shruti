@@ -11,6 +11,7 @@ from ShrutixMusic.core.call import Shruti
 from ShrutixMusic.misc import db
 from ShrutixMusic.utils.database import add_active_video_chat, is_active_chat
 from ShrutixMusic.utils.exceptions import AssistantErr
+from ShrutixMusic.utils.formatters import with_autoplay_status
 from ShrutixMusic.utils.inline import aq_markup, close_markup, stream_markup
 from ShrutixMusic.utils.pastebin import ShrutiBin
 from ShrutixMusic.utils.stream.queue import put_queue, put_queue_index
@@ -104,11 +105,14 @@ async def stream(
                 run = await nand.send_photo(
                     original_chat_id,
                     photo=img,
-                    caption=_["stream_1"].format(
-                        f"https://t.me/{nand.username}?start=info_{vidid}",
-                        title[:23],
-                        duration_min,
-                        user_name,
+                    caption=await with_autoplay_status(
+                        _["stream_1"].format(
+                            f"https://t.me/{nand.username}?start=info_{vidid}",
+                            title[:23],
+                            duration_min,
+                            user_name,
+                        ),
+                        chat_id,
                     ),
                     reply_markup=InlineKeyboardMarkup(button),
                 )
@@ -190,11 +194,14 @@ async def stream(
             run = await nand.send_photo(
                 original_chat_id,
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{nand.username}?start=info_{vidid}",
-                    title[:23],
-                    duration_min,
-                    user_name,
+                caption=await with_autoplay_status(
+                    _["stream_1"].format(
+                        f"https://t.me/{nand.username}?start=info_{vidid}",
+                        title[:23],
+                        duration_min,
+                        user_name,
+                    ),
+                    chat_id,
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -243,8 +250,11 @@ async def stream(
             run = await nand.send_photo(
                 original_chat_id,
                 photo=config.SOUNCLOUD_IMG_URL,
-                caption=_["stream_1"].format(
-                    config.SUPPORT_CHAT, title[:23], duration_min, user_name
+                caption=await with_autoplay_status(
+                    _["stream_1"].format(
+                        config.SUPPORT_CHAT, title[:23], duration_min, user_name
+                    ),
+                    chat_id,
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -297,7 +307,10 @@ async def stream(
             run = await nand.send_photo(
                 original_chat_id,
                 photo=config.TELEGRAM_VIDEO_URL if video else config.TELEGRAM_AUDIO_URL,
-                caption=_["stream_1"].format(link, title[:23], duration_min, user_name),
+                caption=await with_autoplay_status(
+                    _["stream_1"].format(link, title[:23], duration_min, user_name),
+                    chat_id,
+                ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
@@ -358,11 +371,14 @@ async def stream(
             run = await nand.send_photo(
                 original_chat_id,
                 photo=img,
-                caption=_["stream_1"].format(
-                    f"https://t.me/{nand.username}?start=info_{vidid}",
-                    title[:23],
-                    duration_min,
-                    user_name,
+                caption=await with_autoplay_status(
+                    _["stream_1"].format(
+                        f"https://t.me/{nand.username}?start=info_{vidid}",
+                        title[:23],
+                        duration_min,
+                        user_name,
+                    ),
+                    chat_id,
                 ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
@@ -413,7 +429,9 @@ async def stream(
             run = await nand.send_photo(
                 original_chat_id,
                 photo=config.STREAM_IMG_URL,
-                caption=_["stream_2"].format(user_name),
+                caption=await with_autoplay_status(
+                    _["stream_2"].format(user_name), chat_id
+                ),
                 reply_markup=InlineKeyboardMarkup(button),
             )
             db[chat_id][0]["mystic"] = run
