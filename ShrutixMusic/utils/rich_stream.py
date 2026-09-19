@@ -51,7 +51,7 @@ def _parse_inline(segment):
 
 def _html_caption_to_blocks(caption_html):
     return [
-        types.InputRichBlockFooter(text=_parse_inline(line))
+        types.InputRichBlockParagraph(text=_parse_inline(line))
         for line in caption_html.split("\n")
     ]
 
