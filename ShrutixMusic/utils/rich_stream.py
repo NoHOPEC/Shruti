@@ -6,9 +6,15 @@ import re
 from pyrogram import enums, types
 
 from ShrutixMusic.misc import db
+from ShrutixMusic.utils.database import get_lang
 from ShrutixMusic.utils.formatters import seconds_to_min, time_to_seconds
+from strings import get_string
 
 _TAG_RE = re.compile(r"<(/?)(b|a)(?:\s+href=([^>]+))?>", re.IGNORECASE)
+
+
+async def _lang(chat_id):
+    return get_string(await get_lang(chat_id))
 
 
 def _parse_inline(segment):
@@ -43,9 +49,9 @@ def _parse_inline(segment):
     return parts[0] if len(parts) == 1 else parts
 
 
-def _html_caption_to_paragraphs(caption_html):
+def _html_caption_to_blocks(caption_html):
     return [
-        types.InputRichBlockParagraph(text=_parse_inline(line))
+        types.InputRichBlockFooter(text=_parse_inline(line))
         for line in caption_html.split("\n")
     ]
 
@@ -103,16 +109,16 @@ def _queue_len(chat_id):
     return max(len(tracks) - 1, 0) if tracks else 0
 
 
-def _control_rows(chat_id, playing):
+def _control_rows(_, chat_id, playing):
     toggle = (
         types.RichMessageButton(
-            text="II Pause",
+            text=_["RICH_BTN_PAUSE"],
             style=enums.ButtonStyle.DANGER,
             callback_data=f"ADMIN Pause|{chat_id}",
         )
         if playing
         else types.RichMessageButton(
-            text="▷ Resume",
+            text=_["RICH_BTN_RESUME"],
             style=enums.ButtonStyle.SUCCESS,
             callback_data=f"ADMIN Resume|{chat_id}",
         )
@@ -121,13 +127,13 @@ def _control_rows(chat_id, playing):
         types.InputRichBlockButtons(
             buttons=[
                 types.RichMessageButton(
-                    text="↺ Replay",
+                    text=_["RICH_BTN_REPLAY"],
                     style=enums.ButtonStyle.PRIMARY,
                     callback_data=f"ADMIN Replay|{chat_id}",
                 ),
                 toggle,
                 types.RichMessageButton(
-                    text="» Skip",
+                    text=_["RICH_BTN_SKIP"],
                     style=enums.ButtonStyle.PRIMARY,
                     callback_data=f"ADMIN Skip|{chat_id}",
                 ),
@@ -136,7 +142,7 @@ def _control_rows(chat_id, playing):
         types.InputRichBlockButtons(
             buttons=[
                 types.RichMessageButton(
-                    text=f"☰ Queue · {_queue_len(chat_id)}",
+                    text=_["RICH_BTN_QUEUE"].format(_queue_len(chat_id)),
                     style=enums.ButtonStyle.SUCCESS,
                     callback_data=f"nowplaying_queue {chat_id}",
                 ),
@@ -145,17 +151,20 @@ def _control_rows(chat_id, playing):
     ]
 
 
-def build_now_playing_blocks(photo, caption_html, chat_id, played=None, dur=None, playing=True):
+def build_now_playing_blocks(
+    _, photo, caption_html, chat_id, played=None, dur=None, playing=True
+):
     blocks = [types.InputRichBlockPhoto(photo=types.InputMediaPhoto(photo))]
-    blocks += _html_caption_to_paragraphs(caption_html)
+    blocks += _html_caption_to_blocks(caption_html)
     if played and dur:
         blocks.append(_progress_row(played, dur))
-    blocks += _control_rows(chat_id, playing)
+    blocks += _control_rows(_, chat_id, playing)
     return blocks
 
 
 async def send_now_playing_rich(client, chat_id, target_chat_id, photo, caption_html):
-    blocks = build_now_playing_blocks(photo, caption_html, chat_id)
+    _ = await _lang(chat_id)
+    blocks = build_now_playing_blocks(_, photo, caption_html, chat_id)
     msg = await client.send_rich_message(
         target_chat_id,
         rich_message=types.InputRichMessage(blocks=blocks),
@@ -174,7 +183,8 @@ async def update_now_playing_progress(mystic, chat_id, played, dur, playing=True
     caption_html = info[0].get("np_caption")
     if not photo or not caption_html:
         return None
-    blocks = build_now_playing_blocks(photo, caption_html, chat_id, played, dur, playing)
+    _ = await _lang(chat_id)
+    blocks = build_now_playing_blocks(_, photo, caption_html, chat_id, played, dur, playing)
     return await mystic.edit_text(rich_message=types.InputRichMessage(blocks=blocks))
 
 
@@ -189,7 +199,8 @@ async def set_now_playing_state(chat_id, playing):
         return None
     played = seconds_to_min(info[0].get("played", 0)) or None
     dur = info[0].get("dur")
-    blocks = build_now_playing_blocks(photo, caption_html, chat_id, played, dur, playing)
+    _ = await _lang(chat_id)
+    blocks = build_now_playing_blocks(_, photo, caption_html, chat_id, played, dur, playing)
     try:
         return await mystic.edit_text(rich_message=types.InputRichMessage(blocks=blocks))
     except Exception:
