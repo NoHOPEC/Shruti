@@ -1,4 +1,3 @@
-# ShrutixMusic/plugins/admins/callback.py
 import asyncio
 
 from pyrogram import filters
@@ -49,6 +48,7 @@ async def del_back_playlist(client, CallbackQuery, _):
     callback_data = CallbackQuery.data.strip()
     callback_request = callback_data.split(None, 1)[1]
     command, chat = callback_request.split("|")
+    counter = None
     if "_" in str(chat):
         bet = chat.split("_")
         chat = bet[0]
@@ -135,6 +135,19 @@ async def del_back_playlist(client, CallbackQuery, _):
                         return await CallbackQuery.answer(
                             _["admin_14"], show_alert=True
                         )
+    play_now = False
+    if command == "PlayNow":
+        tracks = db.get(chat_id) or []
+        index = next(
+            (i for i, t in enumerate(tracks) if i > 0 and t.get("qid") == counter),
+            None,
+        )
+        if index is None:
+            return await CallbackQuery.answer(_["RICH_PLAYNOW_GONE"], show_alert=True)
+        if index != 1:
+            tracks.insert(1, tracks.pop(index))
+        play_now = True
+        command = "Skip"
     if command == "Pause":
         if not await is_music_playing(chat_id):
             return await CallbackQuery.answer(_["admin_1"], show_alert=True)
@@ -166,7 +179,11 @@ async def del_back_playlist(client, CallbackQuery, _):
     elif command == "Skip" or command == "Replay":
         check = db.get(chat_id)
         if command == "Skip":
-            txt = f"➻ sᴛʀᴇᴀᴍ sᴋɪᴩᴩᴇᴅ 🎄\n│ \n└ʙʏ : {mention} 🥀"
+            txt = (
+                _["RICH_PLAYNOW_DONE"].format(mention)
+                if play_now
+                else f"➻ sᴛʀᴇᴀᴍ sᴋɪᴩᴩᴇᴅ 🎄\n│ \n└ʙʏ : {mention} 🥀"
+            )
             popped = None
             try:
                 popped = check.pop(0)
