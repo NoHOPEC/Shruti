@@ -11,6 +11,8 @@ from strings import get_string
 
 _TAG_RE = re.compile(r"<(/?)(b|a)(?:\s+href=([^>]+))?>", re.IGNORECASE)
 
+_consumed = set()
+
 
 async def _lang(chat_id):
     return get_string(await get_lang(chat_id))
@@ -48,10 +50,28 @@ def _parse_inline(segment):
     return parts[0] if len(parts) == 1 else parts
 
 
+def _balance_lines(caption_html):
+    lines = []
+    carry = False
+    for line in caption_html.split("\n"):
+        if not line:
+            lines.append(line)
+            continue
+        if carry:
+            line = "<b>" + line
+        opened = len(re.findall(r"<b>", line, re.IGNORECASE))
+        closed = len(re.findall(r"</b>", line, re.IGNORECASE))
+        carry = opened > closed
+        if carry:
+            line += "</b>"
+        lines.append(line)
+    return lines
+
+
 def _html_caption_to_blocks(caption_html):
     return [
         types.InputRichBlockParagraph(text=_parse_inline(line))
-        for line in caption_html.split("\n")
+        for line in _balance_lines(caption_html)
     ]
 
 
@@ -170,17 +190,89 @@ def build_now_playing_blocks(
     return blocks
 
 
-async def send_now_playing_rich(client, chat_id, target_chat_id, photo, caption_html):
+def _message_key(message):
+    return (message.chat.id, message.id)
+
+
+async def _deliver(client, target_chat_id, blocks, replace=None):
+    rich = types.InputRichMessage(blocks=blocks)
+    if replace is not None:
+        try:
+            edited = await replace.edit_text(rich_message=rich)
+        except Exception:
+            try:
+                await replace.delete()
+            except Exception:
+                pass
+        else:
+            _consumed.add(_message_key(replace))
+            return edited or replace
+    return await client.send_rich_message(target_chat_id, rich_message=rich)
+
+
+async def release_mystic(mystic):
+    if mystic is None:
+        return
+    key = _message_key(mystic)
+    if key in _consumed:
+        _consumed.discard(key)
+        return
+    try:
+        await mystic.delete()
+    except Exception:
+        pass
+
+
+async def send_now_playing_rich(
+    client, chat_id, target_chat_id, photo, caption_html, replace=None
+):
     _ = await _lang(chat_id)
     blocks = build_now_playing_blocks(_, photo, caption_html, chat_id)
-    msg = await client.send_rich_message(
-        target_chat_id,
-        rich_message=types.InputRichMessage(blocks=blocks),
-    )
+    msg = await _deliver(client, target_chat_id, blocks, replace)
     if db.get(chat_id):
         db[chat_id][0]["np_photo"] = photo
         db[chat_id][0]["np_caption"] = caption_html
     return msg
+
+
+def build_queue_blocks(_, caption_html, chat_id, qid):
+    blocks = _html_caption_to_blocks(caption_html)
+    blocks.append(
+        types.InputRichBlockButtons(
+            buttons=[
+                types.RichMessageButton(
+                    text=_["RICH_BTN_PLAYNOW"],
+                    style=enums.ButtonStyle.SUCCESS,
+                    callback_data=f"ADMIN PlayNow|{chat_id}_{qid}",
+                ),
+            ]
+        )
+    )
+    blocks.append(
+        types.InputRichBlockButtons(
+            buttons=[
+                types.RichMessageButton(
+                    text=_["RICH_BTN_SKIP"],
+                    style=enums.ButtonStyle.PRIMARY,
+                    callback_data=f"ADMIN Skip|{chat_id}",
+                ),
+                types.RichMessageButton(
+                    text=_["RICH_BTN_END"],
+                    style=enums.ButtonStyle.DANGER,
+                    callback_data=f"ADMIN Stop|{chat_id}",
+                ),
+            ]
+        )
+    )
+    return blocks
+
+
+async def send_queue_rich(
+    client, chat_id, target_chat_id, caption_html, qid, replace=None
+):
+    _ = await _lang(chat_id)
+    blocks = build_queue_blocks(_, caption_html, chat_id, qid)
+    return await _deliver(client, target_chat_id, blocks, replace)
 
 
 async def update_now_playing_progress(mystic, chat_id, played, dur, playing=True):
