@@ -182,6 +182,11 @@ RICH_BTN_RESUME : "▷ ਮੁੜ ਚਲਾਓ"
 RICH_BTN_SKIP : "» ਸਕਿੱਪ"
 RICH_BTN_QUEUE : "☰ ਕਤਾਰ · {0}"
 
+RICH_BTN_PLAYNOW : "▷ ਹੁਣੇ ਚਲਾਓ"
+RICH_BTN_END : "▢ ਖ਼ਤਮ"
+RICH_PLAYNOW_GONE : "» ਇਹ ਟਰੈਕ ਹੁਣ ਕਤਾਰ ਵਿੱਚ ਨਹੀਂ ਹੈ।"
+RICH_PLAYNOW_DONE : "➻ ਹੁਣੇ ਚੱਲ ਰਿਹਾ ਹੈ 🎄\n│ \n└ਦੁਆਰਾ : {0} 🥀"
+
 CLOSE_BUTTON : "ਬੰਦ ਕਰੋ"
 BACK_BUTTON : "ਵਾਪਸ"
 
