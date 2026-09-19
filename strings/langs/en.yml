@@ -174,8 +174,8 @@ queue_6 : "<b>🕚 ᴅᴜʀᴀᴛɪᴏɴ :</b> ᴜɴᴋɴᴏᴡɴ ᴅᴜʀᴀᴛ
 queue_7 : "\nᴄʟɪᴄᴋ ᴏɴ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ ᴛᴏ ɢᴇᴛ ᴡʜᴏʟᴇ ǫᴜᴇᴜᴇᴅ ʟɪsᴛ."
 queue_8 : "<b>{0} ᴘʟᴀʏᴇʀ</b>\n\n🎄 <b>sᴛʀᴇᴀᴍɪɴɢ :</b> {1}\n\n🔗 <b>sᴛʀᴇᴀᴍ ᴛʏᴘᴇ :</b> {2}\n🥀 <b>ʀᴇǫᴜᴇsᴛᴇᴅ ʙʏ :</b> {3}\n{4}"
 
-stream_1 : "<blockquote><b>🎧 Nᴏᴡ Sᴛʀᴇᴀᴍɪɴɢ</b>\n\n<b>♪ Tɪᴛʟᴇ :</b> <a href={0}>{1}</a>\n<b>⏱ Dᴜʀᴀᴛɪᴏɴ :</b> {2} ᴍɪɴ\n<b>👤 Rᴇǫᴜᴇsᴛᴇᴅ Bʏ :</b> {3}\n\n<b>▶️ Eɴᴊᴏʏ Tʜᴇ Mᴜsɪᴄ</b> 🎶</blockquote>"
-stream_2 : "<blockquote><b>🎧 Nᴏᴡ Sᴛʀᴇᴀᴍɪɴɢ</b>\n\n<b>📡 Sᴛʀᴇᴀᴍ Tʏᴘᴇ :</b> Lɪᴠᴇ Sᴛʀᴇᴀᴍ [ᴜʀʟ]\n<b>👤 Rᴇǫᴜᴇsᴛᴇᴅ Bʏ :</b> {0}\n\n<b>🔴 Lɪᴠᴇ Sᴛʀᴇᴀᴍ ɪs Oɴ</b> 🎶</blockquote>"
+stream_1 : "<b>🎧 Mᴜsɪᴄ ɪs Pʟᴀʏɪɴɢ</b>\n\n<b>🎵 Nᴏᴡ :</b> <a href={0}>{1}</a>\n<b>⏱ Tɪᴍᴇ :</b> {2} ᴍɪɴ\n<b>👤 Bʏ :</b> {3}\n\n<b>🎶 Eɴᴊᴏʏ Tʜᴇ Tʀᴀᴄᴋ</b>"
+stream_2 : "<b>🔴 Lɪᴠᴇ Mᴜsɪᴄ</b>\n\n<b>📡 Sᴏᴜʀᴄᴇ :</b> Lɪᴠᴇ Sᴛʀᴇᴀᴍ [ᴜʀʟ]\n<b>👤 Bʏ :</b> {0}\n\n<b>🎧 Mᴜsɪᴄ ɪs Lɪᴠᴇ</b>"
 
 RICH_BTN_REPLAY : "↺ Replay"
 RICH_BTN_PAUSE : "II Pause"
