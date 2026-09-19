@@ -1,5 +1,4 @@
 from pyrogram import raw as _raw
-from pyrogram import utils as _pyroutils
 
 
 def _patch_update_group_call_chat_id():
@@ -9,9 +8,9 @@ def _patch_update_group_call_chat_id():
 
     def _peer_to_chat_id(peer):
         if isinstance(peer, _raw.types.PeerChannel):
-            return _pyroutils.get_channel_id(peer.channel_id)
+            return peer.channel_id
         if isinstance(peer, _raw.types.PeerChat):
-            return -peer.chat_id
+            return peer.chat_id
         if isinstance(peer, _raw.types.PeerUser):
             return peer.user_id
         return None
